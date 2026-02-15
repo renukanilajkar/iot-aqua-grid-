@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AquaGrid AI Smart Water System</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    color:white;
+    text-align:center;
+}
+
+h1{margin-top:20px;}
+
+.container{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    flex-wrap:wrap;
+    margin-top:20px;
+}
+
+.card{
+    background:rgba(255,255,255,0.1);
+    backdrop-filter:blur(12px);
+    padding:20px;
+    width:200px;
+    border-radius:18px;
+    box-shadow:0 8px 25px rgba(0,0,0,0.4);
+    transition:0.4s;
+}
+
+.big-card{
+    width:300px;
+    font-size:28px;
+}
+
+.green{background:#1abc9c;}
+.orange{background:#f39c12;}
+.red{background:#e74c3c;}
+
+button{
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin:10px;
+    font-weight:bold;
+}
+
+canvas{margin-top:30px;}
+
+.insight-box{
+    margin-top:20px;
+    width:60%;
+    margin-left:auto;
+    margin-right:auto;
+    background:rgba(0,0,0,0.3);
+    padding:15px;
+    border-radius:12px;
+    text-align:left;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚰 AquaGrid – AI Powered Water Intelligence</h1>
+
+<div class="container">
+
+<div class="card">
+Tank A<br>
+<div id="tankAVal">80%</div>
+</div>
+
+<div class="card">
+Tank B<br>
+<div id="tankBVal">20%</div>
+</div>
+
+<div class="card">
+Pressure<br>
+<div id="pressureVal">0</div>
+</div>
+
+<div class="card" id="riskCard">
+Risk Level<br>
+<div id="riskVal">Low</div>
+</div>
+
+<div class="card big-card" id="healthCard">
+System Health<br>
+<div id="healthVal">95%</div>
+</div>
+
+</div>
+
+<button onclick="toggleSimulation()">Start / Stop Simulation</button>
+<button onclick="triggerBurst()">Simulate Pipe Burst</button>
+
+<div class="insight-box">
+<h3>🤖 AI Insights</h3>
+<div id="insights">
+• System Stable<br>
+• No anomalies detected
+</div>
+</div>
+
+<canvas id="chart" width="900" height="350"></canvas>
+
+<script>
+
+let tankA = 80;
+let tankB = 20;
+let pressure = 50;
+let simulationOn = false;
+let burstMode = false;
+
+function toggleSimulation(){
+    simulationOn = !simulationOn;
+}
+
+function triggerBurst(){
+    burstMode = true;
+}
+
+const ctx = document.getElementById("chart");
+
+const chart = new Chart(ctx,{
+    type:'line',
+    data:{
+        labels:[],
+        datasets:[
+        {label:'Tank A',borderColor:'#00ffff',data:[],tension:0.4},
+        {label:'Tank B',borderColor:'#f1c40f',data:[],tension:0.4}
+        ]
+    },
+    options:{
+        animation:{duration:800},
+        scales:{y:{min:0,max:100}}
+    }
+});
+
+function updateSystem(){
+
+    if(simulationOn && !burstMode){
+        if(tankA>0 && tankB<100){
+            tankA -= 1;
+            tankB += 1;
+        }
+    }
+
+    if(burstMode){
+        tankA -= 5;
+        if(tankA<0) tankA=0;
+    }
+
+    pressure = tankA * 0.7;
+
+    // Leak logic
+    let leak = false;
+    if(burstMode || (tankA<30 && tankB<40)){
+        leak = true;
+    }
+
+    // Risk logic
+    let riskLevel = "Low";
+    let health = 95;
+
+    if(leak){
+        riskLevel="High";
+        health=40;
+    }
+    else if(pressure>70){
+        riskLevel="Medium";
+        health=65;
+    }
+
+    // Update UI
+    document.getElementById("tankAVal").innerHTML = tankA+"%";
+    document.getElementById("tankBVal").innerHTML = tankB+"%";
+    document.getElementById("pressureVal").innerHTML = pressure.toFixed(1);
+
+    document.getElementById("riskVal").innerHTML = riskLevel;
+    document.getElementById("healthVal").innerHTML = health+"%";
+
+    const riskCard=document.getElementById("riskCard");
+    riskCard.className="card "+(riskLevel=="Low"?"green":riskLevel=="Medium"?"orange":"red");
+
+    // AI Insights
+    let insightText="";
+    if(leak){
+        insightText="• Critical pipeline anomaly detected<br>• Immediate inspection required<br>• Risk of water loss escalating";
+    }
+    else if(riskLevel=="Medium"){
+        insightText="• Pressure fluctuation observed<br>• Monitor flow imbalance<br>• Preventive maintenance suggested";
+    }
+    else{
+        insightText="• System Stable<br>• Balanced water transfer<br>• Efficiency optimal";
+    }
+
+    document.getElementById("insights").innerHTML=insightText;
+
+    // Chart
+    if(chart.data.labels.length>25){
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+        chart.data.datasets[1].data.shift();
+    }
+
+    chart.data.labels.push("");
+    chart.data.datasets[0].data.push(tankA);
+    chart.data.datasets[1].data.push(tankB);
+    chart.update();
+}
+
+setInterval(updateSystem,1000);
+
+</script>
+
+</body>
+</html>
